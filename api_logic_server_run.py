@@ -424,7 +424,21 @@ def create_app(swagger_host: str = None, swagger_port: str = None):
             app_logger.info(  f'Customize API - api/expose_service.py, exposing custom services')
             customize_api.expose_services(flask_app, safrs_api, project_dir, swagger_host=swagger_host, PORT=port)  # custom services
 
+            from flask_swagger_ui import get_swaggerui_blueprint
             from api import expose_api_models_classic
+            avoid_blueprint_name_collision = True
+            if avoid_blueprint_name_collision:  # per https://github.com/thomaxxl/safrs/blob/433ec2082cf1237b5f1f3c7a59d299d517d36fd2/examples/mini_examples/ex13_prefix.py#L24
+                api_spec_url = f"/my_swagger"
+                """                              NEXT LINE FAILS
+                File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/flask_restful/__init__.py", line 427, in _register_view
+                    raise ValueError('This endpoint (%s) is already set to the class %s.' % (endpoint, previous_view_class.__name__))
+                ValueError: This endpoint (swagger) is already set to the class SwaggerEndpoint.
+                """
+                safrs_api_2 = SAFRSAPI(flask_app, host=swagger_host, port=swagger_port, prefix=API_PREFIX, 
+                    swaggerui_blueprint=False, api_spec_url=api_spec_url)
+                swaggerui_blueprint = get_swaggerui_blueprint(
+                    API_PREFIX, f"{API_PREFIX}/{api_spec_url}.json", config={"docExpansion": "none", "defaultModelsExpandDepth": -1} )
+                flask_app.register_blueprint(swaggerui_blueprint, url_prefix=API_PREFIX)
             safrs_api_custom = expose_api_models_classic.expose_models(flask_app, swagger_host=swagger_host, PORT=swagger_port, API_PREFIX=API_PREFIX)
 
             app_logger.info("\nCustomize Data Model - database/customize_models.py")
