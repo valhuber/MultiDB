@@ -409,10 +409,15 @@ def create_app(swagger_host: str = None, swagger_port: str = None):
 
         import database.models_todo  # opens multi_db
         import config
-        uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO
+        uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
         flask_app.config.update(SQLALCHEMY_BINDS = \
-            {'BaseToDo': uri_todo})  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
-
+            {'BaseToDo': uri_todo})  # also fails with models_todo
+        configure_session = True
+        if configure_session:  # this breaks database.models.Base
+            Base = database.models.Base
+            session.configure(binds=
+                {database.models.Base:database.models.safrs.DB, 
+                database.models_todo.BaseToDo:database.models_todo.safrs.DB})
         db.init_app(flask_app)
         with flask_app.app_context():
             if False and admin_enabled:
