@@ -408,8 +408,10 @@ def create_app(swagger_host: str = None, swagger_port: str = None):
             + f' -- {len(database.models.metadata.tables)} tables loaded')
 
         import database.models_todo  # opens multi_db
+        import config
+        uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO
         flask_app.config.update(SQLALCHEMY_BINDS = \
-            {'BaseToDo': 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
+            {'BaseToDo': uri_todo})  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
 
         db.init_app(flask_app)
         with flask_app.app_context():
