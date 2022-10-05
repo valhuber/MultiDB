@@ -1,7 +1,6 @@
 # Experiment with Multiple Databases, using Bind
 
-Create the `venv`, and use `API Logic Server` launch config.
-OK, your project is created and open.  You must _Establish Your Python Environment_ to run the Tutorial.  Observe:
+Create the `venv`, and use `API Logic Server` launch config.  Observe:
 
 1. The API Starts
 2. The Swaggers shows `ToDos` (from db #2)
