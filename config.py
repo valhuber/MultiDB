@@ -36,8 +36,7 @@ class Config:
     # Database
     # SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
     #                          'sqlite:///' + os.path.join(basedir, 'app.db') + '?check_same_thread=False'
-    SQLALCHEMY_DATABASE_URI = "sqlite:////Users/val/dev/multi-db/MultiDB/database/db.sqlite"
-    Multi_db = "mysql+pymysql://root:p@localhost:3306/classicmodels"
+    SQLALCHEMY_DATABASE_URI = "sqlite:////Users/val/dev/multi-db/MultiDB2/database/db.sqlite"
 
     # begin patch to set db_url for sqlite (only)  XXXXX
     #   since sqlite db is copied to created project, we can set db_url here
@@ -51,11 +50,6 @@ class Config:
     app_logger.debug(f'config.py - db_url: {db_url}')
     SQLALCHEMY_DATABASE_URI = db_url
     # end patch to set db_url for sqlite (only)
-
-    todo_loc = db_loc = str(project_abs_dir) + "/database/db-todo.sqlite"  # multi_db
-    todo_url = "sqlite:///" + db_loc
-    SQLALCHEMY_DATABASE_URI_TODO = todo_url
-
 
     # override SQLALCHEMY_DATABASE_URI here as required
 

@@ -1,7 +1,7 @@
 about:
-  date: September 18, 2022 16:02:09
+  date: October 09, 2022 07:34:19
   recent_changes: works with modified safrs-react-admin
-  version: 6.01.00
+  version: 6.02.01
 api_root: '{http_type}://{swagger_host}:{port}/{api}'
 info:
   number_relationships: 13

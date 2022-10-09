@@ -3,7 +3,7 @@
 """
 ==============================================================================
 
-    This file starts the API Logic Server (v 6.01.00, September 18, 2022 16:02:09):
+    This file starts the API Logic Server (v 6.02.01, October 09, 2022 07:34:19):
         $ python3 api_logic_server_run.py [--help  # host, port arguments]
 
     Then, access the Admin App and API via the Browser, eg:  
@@ -64,7 +64,7 @@ handler.setFormatter(formatter)
 app_logger.addHandler(handler)
 app_logger.propagate = True
 
-app_logger.setLevel(logging.DEBUG)  # log levels: critical < error < warning(20) < info(30) < debug
+app_logger.setLevel(logging.INFO)  # log levels: critical < error < warning(20) < info(30) < debug
 args = ""
 arg_num = 0
 for each_arg in sys.argv:
@@ -72,7 +72,7 @@ for each_arg in sys.argv:
     arg_num += 1
     if arg_num < len(sys.argv):
         args += ", "
-app_logger.info(f'\nAPI Logic Project Starting at: {__file__}, with args: {args}')
+app_logger.info(f'\nAPI Logic Project Starting at: {__file__}, with args: \n.. {args}\n')
 
 from typing import TypedDict
 import safrs
@@ -82,11 +82,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 import socket
 import warnings
-from api import expose_api_models # , customize_api  multi_db
-# from logic import declare_logic
 from flask import Flask, redirect, send_from_directory, send_file
 from safrs import ValidationError, SAFRSBase, SAFRSAPI
-
 
 def setup_logging(flask_app):
     setup_logic_logger = True
@@ -148,6 +145,8 @@ class ValidationErrorExt(ValidationError):
         self.detail: TypedDict = detail
 
 
+did_send_spa = False
+
 def flask_events(flask_app):
     """ events for serving minified safrs-admin, using admin.yaml
     """
@@ -199,7 +198,7 @@ def flask_events(flask_app):
                 content = f.read()
             content = content.replace("{http_type}", http_type)
             content = content.replace("{swagger_host}", swagger_host)
-            content = content.replace("{port}", swagger_port)  # note - codespaces requires 443 here (typically via args)
+            content = content.replace("{port}", str(swagger_port))  # note - codespaces requires 443 here (typically via args)
             content = content.replace("{api}", API_PREFIX[1:])
             app_logger.debug(f'loading ui/admin/admin.yaml')
             mem = io.BytesIO(str.encode(content))
@@ -232,7 +231,7 @@ def flask_events(flask_app):
         response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS, PUT, DELETE, PATCH"
         response.headers["Access-Control-Allow-Headers"] = \
             "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization"
-        # print(f'cors aftter_request - response: {str(response)}')
+        # app_logger.debug(f'cors after_request - response: {str(response)}')
         return response
 
 
@@ -314,7 +313,7 @@ def get_args():
                 swagger_host = args.swagger_host
                 swagger_port = args.swagger_port
                 http_type = args.http_type
-                verbose = args.verbose
+                verbose = args.verbose in ["True", "true"]
                 create_and_run = args.create_and_run
             else:                               # positional arguments (compatibility)
                 port = args.port_p
@@ -329,77 +328,53 @@ def get_args():
     if use_codespace_defaulting and os.getenv('CODESPACES') and swagger_host == 'localhost':
         app_logger.info('\n Applying Codespaces default port settings')
         swagger_host = os.getenv('CODESPACE_NAME') + '-5656.githubpreview.dev'
-        swagger_port = '443'
+        swagger_port = 443
         http_type = 'https'
 
     return flask_host, swagger_host, port, swagger_port, http_type, verbose, create_and_run
 
-"""
-BaseA = declarative_base()
 
-BaseB = declarative_base()
+# ==========================================================
+# Creates flask_app, Opens Database, Activates API and Logic 
+# ==========================================================
 
-class User(BaseA):
-    # ...
+def create_app(swagger_host: str = None, swagger_port: int = None):
 
-class Address(BaseA):
-    # ...
-
-
-class GameInfo(BaseB):
-    # ...
-
-class GameStats(BaseB):
-    # ...
-
-
-Session = sessionmaker()
-
-# all User/Address operations will be on engine 1, all
-# Game operations will be on engine 2
-Session.configure(binds={BaseA:engine1, BaseB:engine2})
-
-"""
-
-# db = safrs.DB
-
-def create_app(swagger_host: str = None, swagger_port: str = None):
-    """ creates flask_app, activates API and logic """
+    """ Creates flask_app, Opens Database, Activates API and Logic """ 
 
     from sqlalchemy import exc as sa_exc
 
     with warnings.catch_warnings():
+
+        flask_app = Flask("API Logic Server", template_folder='ui/templates')  # templates to load ui/admin/admin.yaml
+
+        setup_logging(flask_app)        
+        safrs_log_level = safrs.log.getEffectiveLevel()
+        db_logger = logging.getLogger('sqlalchemy')
+        db_log_level = db_logger.getEffectiveLevel()
+        do_hide_chatty_logging = True
+        if do_hide_chatty_logging and app_logger.getEffectiveLevel() <= logging.INFO:
+            safrs.log.setLevel(logging.WARN)  # debug is 10, warn is 20, info 30
+            db_logger.setLevel(logging.WARN)
+        flask_app.config.from_object("config.Config")
+
         # https://stackoverflow.com/questions/34674029/sqlalchemy-query-raises-unnecessary-warning-about-sqlite-and-decimal-how-to-spe
         warnings.simplefilter("ignore", category=sa_exc.SAWarning)  # alert - disable for safety msgs
 
-        admin_enabled = os.name != "nt"
-        """ internal use, for future enhancements """
-
         def constraint_handler(message: str, constraint: object, logic_row: LogicRow):
+            """ format LogicBank constraint exception for SAFRS """
             if constraint.error_attributes:
                 detail = {"model": logic_row.name, "error_attributes": constraint.error_attributes}
             else:
                 detail = {"model": logic_row.name}
             raise ValidationErrorExt(message=message, detail=detail)
 
-        flask_app = Flask("API Logic Server", template_folder='ui/templates')  # templates to load ui/admin/admin.yaml
-        flask_app.config.from_object("config.Config")
+        admin_enabled = os.name != "nt"
+        """ internal use, for future enhancements """
         if admin_enabled:
             flask_app.config.update(SQLALCHEMY_BINDS={'admin': 'sqlite:////tmp/4LSBE.sqlite.4'})
 
-        safrs_log_level = safrs.log.getEffectiveLevel()
-        db_logger = logging.getLogger('sqlalchemy')
-        db_log_level = db_logger.getEffectiveLevel()
-        do_hide_chatty_logging = True
-        if do_hide_chatty_logging and app_logger.getEffectiveLevel() >= logging.INFO:
-            safrs.log.setLevel(logging.WARN)  # warn is 20, info 30
-            db_logger.setLevel(logging.WARN)
-        setup_logging(flask_app)
-
         db = safrs.DB
-        # Base: declarative_base = db.Model  # Base is of type declarative_base
-        # from database import models
-        # import database.db  # opens db
         session: Session = db.session
         import database.models  # opens db
         from logic import declare_logic
@@ -407,51 +382,19 @@ def create_app(swagger_host: str = None, swagger_port: str = None):
         app_logger.info("Declare   Logic complete - logic/declare_logic.py (rules + code)"
             + f' -- {len(database.models.metadata.tables)} tables loaded')
 
-        import database.models_todo  # opens multi_db
-        app_logger.info(f'Also, {len(database.models_todo.metadata.tables)} models_todo tables loaded')
-        import config
-        uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
-        flask_app.config.update(SQLALCHEMY_BINDS = \
-            {'BaseToDo': uri_todo})  # also fails with models_todo
-        configure_session = True
-        if configure_session:  # this breaks database.models.Base
-            Base = database.models.Base
-            session.configure(binds=
-                {database.models.Base:database.models.safrs.DB, 
-                database.models_todo.BaseToDo:database.models_todo.safrs.DB})
         db.init_app(flask_app)
         with flask_app.app_context():
-            if False and admin_enabled:
+            if admin_enabled:
                 db.create_all()
                 db.create_all(bind='admin')
                 session.commit()
 
             from api import expose_api_models, customize_api
             app_logger.info(f'\nDeclare   API - api/expose_api_models, endpoint for each table on {swagger_host}:{swagger_port}')
-            safrs_api = expose_api_models.expose_models(flask_app, swagger_host=swagger_host, PORT=swagger_port, API_PREFIX=API_PREFIX)
-            app_logger.info(  f'Customize API - api/expose_service.py, exposing custom services')
+            safrs_api = SAFRSAPI(flask_app, host=swagger_host, port=swagger_port, prefix = API_PREFIX)
+            expose_api_models.expose_models(safrs_api)
+            app_logger.info(f'Customize API - api/expose_service.py, exposing custom services')
             customize_api.expose_services(flask_app, safrs_api, project_dir, swagger_host=swagger_host, PORT=port)  # custom services
-
-            from api import expose_api_models_todo
-            use_existing_api = True
-            if use_existing_api:
-                expose_api_models_todo.expose_models_on_existing_api(safrs_api)
-            else:
-                avoid_blueprint_name_collision = True
-                if avoid_blueprint_name_collision:  # per https://github.com/thomaxxl/safrs/blob/433ec2082cf1237b5f1f3c7a59d299d517d36fd2/examples/mini_examples/ex13_prefix.py#L24
-                    from flask_swagger_ui import get_swaggerui_blueprint
-                    api_spec_url = f"/my_swagger"
-                    """                              NEXT LINE FAILS
-                    File "/Library/Frameworks/Python.framework/Versions/3.10/lib/python3.10/site-packages/flask_restful/__init__.py", line 427, in _register_view
-                        raise ValueError('This endpoint (%s) is already set to the class %s.' % (endpoint, previous_view_class.__name__))
-                    ValueError: This endpoint (swagger) is already set to the class SwaggerEndpoint.
-                    """
-                    safrs_api_2 = SAFRSAPI(flask_app, host=swagger_host, port=swagger_port, prefix=API_PREFIX, 
-                        swaggerui_blueprint=False, api_spec_url=api_spec_url)
-                    swaggerui_blueprint = get_swaggerui_blueprint(
-                        API_PREFIX, f"{API_PREFIX}/{api_spec_url}.json", config={"docExpansion": "none", "defaultModelsExpandDepth": -1} )
-                    flask_app.register_blueprint(swaggerui_blueprint, url_prefix=API_PREFIX)
-                safrs_api_custom = expose_api_models_classic.expose_models(flask_app, swagger_host=swagger_host, PORT=swagger_port, API_PREFIX=API_PREFIX)
 
             app_logger.info("\nCustomize Data Model - database/customize_models.py")
             from database import customize_models
@@ -461,10 +404,8 @@ def create_app(swagger_host: str = None, swagger_port: str = None):
         
         safrs.log.setLevel(safrs_log_level)
         db_logger.setLevel(db_log_level)
-        return flask_app, safrs_api
+        return flask_app
 
-
-did_send_spa = False
 
 # ==================================
 #        MAIN CODE
@@ -475,11 +416,11 @@ did_send_spa = False
 if verbose:
     app_logger.setLevel(logging.DEBUG)
 
-flask_app, safrs_api = create_app(swagger_host = swagger_host, swagger_port = swagger_port)
+flask_app = create_app(swagger_host = swagger_host, swagger_port = swagger_port)
 flask_events(flask_app)
 
 if __name__ == "__main__":
-    msg = f'API Logic Project Loaded (not WSGI), version 6.01.00, configured for http://{swagger_host}:{port}\n'
+    msg = f'API Logic Project Loaded (not WSGI), version 6.02.01, configured for http://{swagger_host}:{port}\n'
     if is_docker():
         msg += f' (running from docker container at {flask_host} - may require refresh)\n'
     app_logger.info(f'\n{msg}')
@@ -497,7 +438,7 @@ if __name__ == "__main__":
 
     flask_app.run(host=flask_host, threaded=False, port=port)
 else:
-    msg = f'API Logic Project Loaded (WSGI), version 6.01.00, configured for {http_type}://{swagger_host}:{port}\n'
+    msg = f'API Logic Project Loaded (WSGI), version 6.02.01, configured for {http_type}://{swagger_host}:{port}\n'
     if is_docker():
         msg += f' (running from docker container at {flask_host} - may require refresh)\n'
     app_logger.info(f'\n{msg}')
