@@ -64,7 +64,7 @@ handler.setFormatter(formatter)
 app_logger.addHandler(handler)
 app_logger.propagate = True
 
-app_logger.setLevel(logging.INFO)  # log levels: critical < error < warning(20) < info(30) < debug
+app_logger.setLevel(logging.DEBUG)  # log levels: critical < error < warning(20) < info(30) < debug
 args = ""
 arg_num = 0
 for each_arg in sys.argv:
@@ -382,9 +382,22 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
         app_logger.info("Declare   Logic complete - logic/declare_logic.py (rules + code)"
             + f' -- {len(database.models.metadata.tables)} tables loaded')
 
+        import database.models_todo  # opens multi_db
+        app_logger.info(f'Also, {len(database.models_todo.metadata.tables)} models_todo tables loaded')
+        import config
+        uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
+        flask_app.config.update(SQLALCHEMY_BINDS = \
+            {'BaseToDo': uri_todo})  # also fails with models_todo
+        configure_session = True
+        if configure_session:  # this breaks database.models.Base
+            Base = database.models.Base
+            session.configure(binds=
+                {database.models.Base:database.models.safrs.DB, 
+                database.models_todo.BaseToDo:database.models_todo.safrs.DB})
+
         db.init_app(flask_app)
         with flask_app.app_context():
-            if admin_enabled:
+            if False and admin_enabled:
                 db.create_all()
                 db.create_all(bind='admin')
                 session.commit()
@@ -395,6 +408,11 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
             expose_api_models.expose_models(safrs_api)
             app_logger.info(f'Customize API - api/expose_service.py, exposing custom services')
             customize_api.expose_services(flask_app, safrs_api, project_dir, swagger_host=swagger_host, PORT=port)  # custom services
+
+            from api import expose_api_models_todo  # opens multi_db APIs
+            use_existing_api = True
+            if use_existing_api:
+                expose_api_models_todo.expose_models_on_existing_api(safrs_api)
 
             app_logger.info("\nCustomize Data Model - database/customize_models.py")
             from database import customize_models
