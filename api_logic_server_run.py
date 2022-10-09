@@ -387,16 +387,15 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
         import config
         uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
         flask_app.config.update(SQLALCHEMY_BINDS = \
-            {'BaseToDo': uri_todo})  # also fails with models_todo
-        configure_session = True
-        if configure_session:  # this breaks database.models.Base
-            Base = database.models.Base
-            session.configure(binds=
-                {database.models.Base:database.models.safrs.DB, 
-                database.models_todo.BaseToDo:database.models_todo.safrs.DB})
-
+            {'BaseToDo': uri_todo})  # multi_db: also fails with models_todo
+        thomas_fix = True
         db.init_app(flask_app)
         with flask_app.app_context():
+
+            session.configure(binds=  # multi_db: database setup
+                {database.models.Base:database.models.safrs.DB.get_engine(),
+                    database.models_todo.BaseToDo:database.models_todo.safrs.DB.get_engine()})
+                    
             if False and admin_enabled:
                 db.create_all()
                 db.create_all(bind='admin')
@@ -409,7 +408,7 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
             app_logger.info(f'Customize API - api/expose_service.py, exposing custom services')
             customize_api.expose_services(flask_app, safrs_api, project_dir, swagger_host=swagger_host, PORT=port)  # custom services
 
-            from api import expose_api_models_todo  # opens multi_db APIs
+            from api import expose_api_models_todo  # multi_db: API setup
             use_existing_api = True
             if use_existing_api:
                 expose_api_models_todo.expose_models_on_existing_api(safrs_api)
