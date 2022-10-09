@@ -6,6 +6,7 @@ Create the `venv`, and use `API Logic Server` launch config.
 Revised 10/9:
 * App rebuilt for API Logic Server 6.2 - this is a substantial cleanup of the `api_logic_server_run.py` code
 * Thomas' fixes merged in
+* Added Reference Example (below)
 
 # Reference Example
 
@@ -20,7 +21,7 @@ If we isolate SQLAlchemy from Flask & SAFRS, it does work:
 2. Admin App runs (eg, Categories)
 3. Swagger runs, and can GET (eg, Categories)
 4. Swagger shows `ToDos` (from db #2)
-5. `ToDos` fails with __No Such Table__
+5. Swagger `ToDos` fails with __No Such Table__
 
 ```
 {
