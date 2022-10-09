@@ -382,20 +382,47 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
         app_logger.info("Declare   Logic complete - logic/declare_logic.py (rules + code)"
             + f' -- {len(database.models.metadata.tables)} tables loaded')
 
+        """ reference example
+        BaseA = declarative_base()
+
+        BaseB = declarative_base()
+
+        class User(BaseA):
+            # ...
+
+        class Address(BaseA):
+            # ...
+
+
+        class GameInfo(BaseB):
+            # ...
+
+        class GameStats(BaseB):
+            # ...
+
+
+        Session = sessionmaker()
+
+        # all User/Address operations will be on engine 1, all
+        # Game operations will be on engine 2
+        Session.configure(binds={BaseA:engine1, BaseB:engine2})
+
+        """
+
         import database.models_todo  # opens multi_db
         app_logger.info(f'Also, {len(database.models_todo.metadata.tables)} models_todo tables loaded')
         import config
         uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
         flask_app.config.update(SQLALCHEMY_BINDS = \
             {'BaseToDo': uri_todo})  # multi_db: also fails with models_todo
-        thomas_fix = True
         db.init_app(flask_app)
         with flask_app.app_context():
-
+            debug_models = database.models.Base  # class 'sqlalchemy.orm.decl_api.DeclarativeMeta
+            debug_models_todo = database.models_todo.BaseToDo
             session.configure(binds=  # multi_db: database setup
-                {database.models.Base:database.models.safrs.DB.get_engine(),
-                    database.models_todo.BaseToDo:database.models_todo.safrs.DB.get_engine()})
-                    
+                {database.models.Base:          database.models.     safrs.DB.get_engine(),
+                 database.models_todo.BaseToDo: database.models_todo.safrs.DB.get_engine()})
+
             if False and admin_enabled:
                 db.create_all()
                 db.create_all(bind='admin')

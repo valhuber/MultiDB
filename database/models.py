@@ -15,7 +15,7 @@ from safrs import SAFRSBase
 
 import safrs
 
-Base = declarative_base()
+Base = declarative_base()  # <class 'sqlalchemy.orm.decl_api.DeclarativeMeta'>
 metadata = Base.metadata
 
 #NullType = db.String  # datatype fixup

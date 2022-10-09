@@ -28,7 +28,12 @@ Revised 10/9:
 }
 ```
 
-# Bacgrkound Info
+Note `session.binds` is an object, not a dict:
+
+<figure><img src="https://github.com/valhuber/MultiDB/blob/main/images/session-info.png?raw=true"></figure>
+
+&nbsp;
+# Background Info
 
 Key code is in `api_logic_server_run.py`, as noted in /images.
 
