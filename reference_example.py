@@ -29,12 +29,7 @@ Session.configure(binds={BaseA:engine1, BaseB:engine2})
 """
 
 from venv import create
-import database.models_todo  # opens multi_db
 import config
-
-import database.models  # opens db
-
-
 from sqlalchemy import (String,
                         Integer,
                         engine_from_config,
@@ -44,7 +39,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import sqlalchemy as SQLAlchemy
 
-uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
+import database.models_todo  # opens multi_db
+import database.models  # opens db
 
 engines = {
     'drivers':create_engine(config.Config.SQLALCHEMY_DATABASE_URI),
