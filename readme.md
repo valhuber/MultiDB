@@ -7,6 +7,12 @@ Revised 10/9:
 * App rebuilt for API Logic Server 6.2 - this is a substantial cleanup of the `api_logic_server_run.py` code
 * Thomas' fixes merged in
 
+# Reference Example
+
+If we isolate SQLAlchemy from Flask & SAFRS, it does work:
+
+<figure><img src="https://github.com/valhuber/MultiDB/blob/main/images/reference_example.png?raw=true"></figure>
+
 
 # Status
 

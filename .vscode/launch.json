@@ -15,6 +15,16 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "REFERENCE EXAMPLE",
+            "type": "python",
+            "request": "launch",
+            "program": "reference_example.py",
+            "redirectOutput": true,
+            "justMyCode": false,
+            "args": ["--flask_host=localhost", "--port=5656", "--swagger_host=localhost", "--verbose=True"],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Behave Run",
             "type": "python",
             "request": "launch",

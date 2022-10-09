@@ -382,34 +382,7 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
         app_logger.info("Declare   Logic complete - logic/declare_logic.py (rules + code)"
             + f' -- {len(database.models.metadata.tables)} tables loaded')
 
-        """ reference example
-        BaseA = declarative_base()
-
-        BaseB = declarative_base()
-
-        class User(BaseA):
-            # ...
-
-        class Address(BaseA):
-            # ...
-
-
-        class GameInfo(BaseB):
-            # ...
-
-        class GameStats(BaseB):
-            # ...
-
-
-        Session = sessionmaker()
-
-        # all User/Address operations will be on engine 1, all
-        # Game operations will be on engine 2
-        Session.configure(binds={BaseA:engine1, BaseB:engine2})
-
-        """
-
-        import database.models_todo  # opens multi_db
+        import database.models_todo  # opens multi_db (see also reference_example)
         app_logger.info(f'Also, {len(database.models_todo.metadata.tables)} models_todo tables loaded')
         import config
         uri_todo = config.Config.SQLALCHEMY_DATABASE_URI_TODO  # 'sqlite:////Users/val/dev/multi-db/MultiDB/database/db-todo.sqlite'})
