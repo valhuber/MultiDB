@@ -1,47 +1,93 @@
-# Experiment with Multiple Databases, using Bind
+# Multi DB Projects
 
-Create the `venv`, and use `API Logic Server` launch config.  
+## Goals
 
-# Recent Changes
-Revised 10/9:
-* App rebuilt for API Logic Server 6.2 - this is a substantial cleanup of the `api_logic_server_run.py` code
-* Thomas' fixes merged in
-* Added Reference Example (below)
+[This POC](https://github.com/valhuber/MultiDB) is intended to:
 
-# Reference Example
+* Demonstrate how to handle multiple databases in an API Logic Server Project.
 
-If we isolate SQLAlchemy from Flask & SAFRS, it does work:
-
-<figure><img src="https://github.com/valhuber/MultiDB/blob/main/images/reference_example.png?raw=true"></figure>
-
-
-# Status
-
-1. The API Starts
-2. Admin App runs (eg, Categories)
-3. Swagger runs, and can GET (eg, Categories)
-4. Swagger shows `ToDos` (from db #2)
-5. Swagger `ToDos` fails with __No Such Table__
-
-```
-{
-  "errors": [
-    {
-      "title": "Generic Error: (sqlite3.OperationalError) no such table: todos\n[SQL: SELECT todos.task AS todos_task, todos.category AS todos_category, todos.date_added AS todos_date_added, todos.date_completed AS todos_date_completed, todos.status AS todos_status, todos.position AS todos_position, todos.id AS todos_id \nFROM todos ORDER BY todos.id\n LIMIT ? OFFSET ?]\n[parameters: (10, 0)]\n(Background on this error at: https://sqlalche.me/e/14/e3q8)",
-      "detail": "Generic Error: (sqlite3.OperationalError) no such table: todos\n[SQL: SELECT todos.task AS todos_task, todos.category AS todos_category, todos.date_added AS todos_date_added, todos.date_completed AS todos_date_completed, todos.status AS todos_status, todos.position AS todos_position, todos.id AS todos_id \nFROM todos ORDER BY todos.id\n LIMIT ? OFFSET ?]\n[parameters: (10, 0)]\n(Background on this error at: https://sqlalche.me/e/14/e3q8)",
-      "code": 500
-    }
-  ]
-}
-```
-
-Note `session.binds` is an object, not a dict:
-
-<figure><img src="https://github.com/valhuber/MultiDB/blob/main/images/session-info.png?raw=true"></figure>
+    * This is a copy of the sample project, with an additional _Todo_ database
 
 &nbsp;
-# Background Info
 
-Key code is in `api_logic_server_run.py`, as noted in /images.
+Automated support is not yet available, but envisioned, perhaps as follows:
 
-Search for `multi_db`.
+```bash
+ApiLogicServer add-database --db_url=XX --bind_name=yy
+```
+
+&nbsp;
+
+## Setup and Test
+
+Should run using the default Launch Configuration.  Verify by running the admin app, or cURL commands:
+
+```
+curl -X 'GET' \
+'http://localhost:5656/api/CategoryTable/?fields%5BCategory%5D=Id%2CCategoryName%2CDescription&page%5Boffset%5D=0&page%5Blimit%5D=10&sort=id' -H 'accept: application/vnd.api+json' -H 'Content-Type: application/vnd.api+json'
+```
+
+&nbsp;
+
+### Background: SQLAlchemy ```Binds```
+
+SQLAlchemy supports the concept of Binds, to support multiple database access within a session, e.g.:
+
+```python
+    flask_app.config.update(SQLALCHEMY_BINDS = \
+        {'todos-bind': flask_app.config['SQLALCHEMY_DATABASE_URI_TODO']})
+```
+
+Note the Bind name: `todos-bind`
+
+
+## Steps
+
+Follow the steps below to add multiple database support to your existing API Logic Project.  
+
+* Use this project as a reference example
+
+* Search for ```# Multi-DB```
+
+&nbsp;
+
+### 1. Add models file `models_todo.py`
+
+Add your models_<bind> to the `database` directory:
+
+1. Create this using API Logic Server in a _separate_ project
+2. Alter it as illustrated in `models_todo.py`:
+    1. Declare _additional base classes_
+    2. _Use additional base classes_ on each class definition
+    3. _Identify the bind_
+
+&nbsp;
+
+### 2. _Define URI_ in `config.py`
+
+This identifies the physical location of the database.
+
+### 3. Update `api_logic_server_run.py` - open models, update binds, expose API
+
+Note the following code:
+
+```python
+            multi_db_enabled = True    # Multi-DB: open models, update binds, expose API
+            if multi_db_enabled:
+                from api import expose_api_models_todo
+                from database import models_todo
+                flask_app.config.update(SQLALCHEMY_BINDS = \
+                    {'todos-bind': flask_app.config['SQLALCHEMY_DATABASE_URI_TODO']})
+                app_logger.info(f"\nTODOs Config complete - database/models_todo.py"
+                    + f'\n -- with bind: {session.bind}'
+                    + f'\n -- {len(database.models_todo.BaseToDo.metadata.tables)} tables loaded')
+                expose_api_models_todo.expose_models_on_existing_api(safrs_api)
+```
+
+&nbsp;
+
+### 4. Update your `ui/admin/admin.yaml`
+
+
+&nbsp;
+

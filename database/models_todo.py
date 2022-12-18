@@ -15,7 +15,7 @@ from flask_login import UserMixin
 import safrs
 from flask_sqlalchemy import SQLAlchemy
 
-db = SQLAlchemy()
+db = SQLAlchemy()                                           # Multi-DB - additional base classes
 BaseToDo = declarative_base()
 metadata = BaseToDo.metadata
 
@@ -34,9 +34,9 @@ t_sqlite_sequence = Table(
 )
 
 
-class Todo(SAFRSBase, BaseToDo, db.Model, UserMixin):
+class Todo(SAFRSBase, BaseToDo, db.Model, UserMixin):       # Multi-DB  - use additional base classes
     __tablename__ = 'todos'
-    __bind_key__ = 'todos-bind'
+    __bind_key__ = 'todos-bind'                             # Multi-DB  - identify the bind
 
     task = Column(Text)
     category = Column(Text)
