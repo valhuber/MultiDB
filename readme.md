@@ -50,8 +50,9 @@ SQLAlchemy supports the concept of Binds, to support multiple database access wi
 
 Note the Bind name: `todos-bind`
 
+&nbsp;
 
-## Steps
+## Setup Steps
 
 Follow the steps below to add multiple database support to your existing API Logic Project.  
 
@@ -76,6 +77,8 @@ Add your models_<bind> to the `database` directory:
 ### 2. _Define URI_ in `config.py`
 
 This identifies the physical location of the database.
+
+&nbsp;
 
 ### 3. Update `api_logic_server_run.py` - open models, update binds, expose API
 
