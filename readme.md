@@ -24,7 +24,17 @@ Should run using the default Launch Configuration.  Verify by running the admin 
 
 ```
 curl -X 'GET' \
-'http://localhost:5656/api/CategoryTable/?fields%5BCategory%5D=Id%2CCategoryName%2CDescription&page%5Boffset%5D=0&page%5Blimit%5D=10&sort=id' -H 'accept: application/vnd.api+json' -H 'Content-Type: application/vnd.api+json'
+  'http://localhost:5656/api/Category/1/?fields%5BCategory%5D=Id%2CCategoryName%2CDescription' \
+  -H 'accept: application/vnd.api+json' \
+  -H 'Content-Type: application/vnd.api+json'
+```
+and,
+
+```bash
+curl -X 'GET' \
+  'http://localhost:5656/api/todos/?fields%5BTodo%5D=task%2Ccategory%2Cdate_added%2Cdate_completed%2Cstatus%2Cposition&page%5Boffset%5D=0&page%5Blimit%5D=10&sort=id' \
+  -H 'accept: application/vnd.api+json' \
+  -H 'Content-Type: application/vnd.api+json'
 ```
 
 &nbsp;
