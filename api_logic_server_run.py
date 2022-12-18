@@ -405,14 +405,7 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
             app_logger.info("\nCustomize Data Model - database/customize_models.py")
             from database import customize_models
 
-            """
-            debug_models = database.models.Base  # class 'sqlalchemy.orm.decl_api.DeclarativeMeta
-            debug_models_todo = database.models_todo.BaseToDo
-            session.configure(binds=  # multi_db: database setup
-                {database.models.Base:          database.models.     safrs.DB.get_engine(),
-                 database.models_todo.BaseToDo: database.models_todo.safrs.DB.get_engine()})
-            """
-            multi_db_enabled = True    # multi_db: API setup
+            multi_db_enabled = True    # Multi-DB: open models, update binds, expose API 
             if multi_db_enabled:
                 from api import expose_api_models_todo
                 from database import models_todo
