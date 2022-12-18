@@ -7,6 +7,20 @@ info:
   number_relationships: 13
   number_tables: 17
 resources:
+  todos:
+    attributes:
+      - label: ' Task Name*'
+        name: task
+        search: true
+        sort: true
+      - name: category
+      - name: date_added
+      - name: date_completed
+      - name: status
+      - name: position
+      - name: id
+    type: ToDo
+    user_key: task
   Category:
     attributes:
       - label: ' Category Name*'
