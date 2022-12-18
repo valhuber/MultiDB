@@ -11,9 +11,11 @@ from sqlalchemy.ext.declarative import declarative_base
 #    See https://valhuber.github.io/ApiLogicServer/Project-Rebuild/#rebuilding
 
 from safrs import SAFRSBase
-
+from flask_login import UserMixin
 import safrs
+from flask_sqlalchemy import SQLAlchemy
 
+db = SQLAlchemy()
 BaseToDo = declarative_base()
 metadata = BaseToDo.metadata
 
@@ -32,8 +34,9 @@ t_sqlite_sequence = Table(
 )
 
 
-class Todo(SAFRSBase, BaseToDo):
+class Todo(SAFRSBase, BaseToDo, db.Model, UserMixin):
     __tablename__ = 'todos'
+    __bind_key__ = 'todos-bind'
 
     task = Column(Text)
     category = Column(Text)

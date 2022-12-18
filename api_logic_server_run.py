@@ -390,12 +390,6 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
             {'BaseToDo': uri_todo})  # multi_db: also fails with models_todo
         db.init_app(flask_app)
         with flask_app.app_context():
-            debug_models = database.models.Base  # class 'sqlalchemy.orm.decl_api.DeclarativeMeta
-            debug_models_todo = database.models_todo.BaseToDo
-            session.configure(binds=  # multi_db: database setup
-                {database.models.Base:          database.models.     safrs.DB.get_engine(),
-                 database.models_todo.BaseToDo: database.models_todo.safrs.DB.get_engine()})
-
             if False and admin_enabled:
                 db.create_all()
                 db.create_all(bind='admin')
@@ -408,13 +402,28 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
             app_logger.info(f'Customize API - api/expose_service.py, exposing custom services')
             customize_api.expose_services(flask_app, safrs_api, project_dir, swagger_host=swagger_host, PORT=port)  # custom services
 
-            from api import expose_api_models_todo  # multi_db: API setup
-            use_existing_api = True
-            if use_existing_api:
-                expose_api_models_todo.expose_models_on_existing_api(safrs_api)
-
             app_logger.info("\nCustomize Data Model - database/customize_models.py")
             from database import customize_models
+
+            """
+            debug_models = database.models.Base  # class 'sqlalchemy.orm.decl_api.DeclarativeMeta
+            debug_models_todo = database.models_todo.BaseToDo
+            session.configure(binds=  # multi_db: database setup
+                {database.models.Base:          database.models.     safrs.DB.get_engine(),
+                 database.models_todo.BaseToDo: database.models_todo.safrs.DB.get_engine()})
+            """
+            multi_db_enabled = True    # multi_db: API setup
+            if multi_db_enabled:
+                from api import expose_api_models_todo
+                from database import models_todo
+                flask_app.config.update(SQLALCHEMY_BINDS = \
+                    {'todos-bind': flask_app.config['SQLALCHEMY_DATABASE_URI_TODO']})
+                app_logger.info(f"\nTODOs Config complete - database/models_todo.py"
+                    + f'\n -- with bind: {session.bind}'
+                    + f'\n -- {len(database.models_todo.BaseToDo.metadata.tables)} tables loaded')
+                expose_api_models_todo.expose_models_on_existing_api(safrs_api)
+                todos = session.query(models_todo.Todo).all()  # fails, no such table todos
+
 
             SAFRSBase._s_auto_commit = False
             session.close()

@@ -54,6 +54,7 @@ class Config:
     todo_loc = db_loc = str(project_abs_dir) + "/database/db-todo.sqlite"  # multi_db
     todo_url = "sqlite:///" + db_loc
     SQLALCHEMY_DATABASE_URI_TODO = todo_url
+    app_logger.debug(f'config.py - SQLALCHEMY_DATABASE_URI_TODO: {SQLALCHEMY_DATABASE_URI_TODO}')
 
     # override SQLALCHEMY_DATABASE_URI here as required
 
