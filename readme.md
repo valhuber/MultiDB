@@ -18,6 +18,18 @@ ApiLogicServer add-database --db_url=XX --bind_name=yy
 
 &nbsp;
 
+## Issues
+
+## Table Name Collisions
+
+SAFRS creates endpoint based on table names.  Since 2 databases might have the same table name, these might collide.
+
+> Should SARFS provided an option to create endpoint name from __class name__?
+
+> This might also be regarded as _more friendly_ - API is not  restricted to table names.
+
+&nbsp;
+
 ## Setup and Test
 
 Should run using the default Launch Configuration.  Verify by running the admin app, or cURL commands:
