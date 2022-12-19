@@ -2,7 +2,7 @@
 
 ## Goals
 
-[This POC](https://github.com/valhuber/MultiDB) is intended to:
+[This POC](https://github.com/valhuber/MultiDB) (runs in codespaces, explore with ".") is intended to:
 
 * Demonstrate how to handle multiple databases in an API Logic Server Project.
 
