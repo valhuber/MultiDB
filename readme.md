@@ -28,6 +28,8 @@ SAFRS creates endpoint based on table names.  Since 2 databases might have the s
 
 > This might also be regarded as _more friendly_ - API is not  restricted to table names.
 
+Update: already supported by https://github.com/thomaxxl/safrs/blob/master/safrs/base.py#L738. (use collection name).
+
 &nbsp;
 
 ## Setup and Test
