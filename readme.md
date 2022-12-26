@@ -13,7 +13,7 @@
 Automated support is not yet available, but envisioned, perhaps as follows:
 
 ```bash
-ApiLogicServer add-database --db_url=XX --bind_name=yy
+ApiLogicServer add-database --db_url=XX --bind_name=yy  --prefix_class=True
 ```
 
 &nbsp;
@@ -41,14 +41,22 @@ curl -X 'GET' \
 
 ### Background: SQLAlchemy ```Binds```
 
-SQLAlchemy supports the concept of Binds, to support multiple database access within a session, e.g.:
+SQLAlchemy supports the concept of [Binds](https://flask-sqlalchemy.palletsprojects.com/en/3.0.x/binds/), to support multiple database access within a session, e.g.:
 
 ```python
     flask_app.config.update(SQLALCHEMY_BINDS = \
         {'todos-bind': flask_app.config['SQLALCHEMY_DATABASE_URI_TODO']})
 ```
 
-Note the Bind name: `todos-bind`
+Note the Bind name: `todos-bind`.  The default `bind_key` is `None`.  Model creation looks like this:
+
+```python
+class Todo(SAFRSBase, BaseToDo, db.Model, UserMixin):       # Multi-DB  - use additional base classes
+    __tablename__ = 'todos'
+    __bind_key__ = 'todos-bind'                             # Multi-DB  - identify the bind
+
+    task = Column(Text)  # etc
+```
 
 &nbsp;
 
