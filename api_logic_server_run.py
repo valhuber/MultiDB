@@ -415,7 +415,7 @@ def create_app(swagger_host: str = None, swagger_port: int = None):
                     + f'\n -- with bind: {session.bind}'
                     + f'\n -- {len(database.models_todo.BaseToDo.metadata.tables)} tables loaded')
                 expose_api_models_todo.expose_models_on_existing_api(safrs_api)
-                todos = session.query(models_todo.Todo).all()  # fails, no such table todos
+                todos = session.query(models_todo.Todo).all()
 
 
             SAFRSBase._s_auto_commit = False
